@@ -28,7 +28,7 @@ class MakeResourceCommand extends Command
 
     protected $description = 'Create a new Filament resource class and default page classes';
 
-    protected $signature = 'make:filament-resource {name?} {--model-namespace=} {--soft-deletes} {--view} {--G|generate} {--S|simple} {--panel=} {--model} {--migration} {--factory} {--F|force}';
+    protected $signature = 'make:filament-resource {name?} {--model-namespace=} {--soft-deletes} {--view} {--G|generate} {--S|simple} {--panel=} {--model} {--migration} {--factory} {--F|force} {--t|translatable}';
 
     public function handle(): int
     {
@@ -148,13 +148,13 @@ class MakeResourceCommand extends Command
         $viewResourcePagePath = "{$resourcePagesDirectory}/{$viewResourcePageClass}.php";
 
         if (! $this->option('force') && $this->checkForCollision([
-            $resourcePath,
-            $listResourcePagePath,
-            $manageResourcePagePath,
-            $createResourcePagePath,
-            $editResourcePagePath,
-            $viewResourcePagePath,
-        ])) {
+                $resourcePath,
+                $listResourcePagePath,
+                $manageResourcePagePath,
+                $createResourcePagePath,
+                $editResourcePagePath,
+                $viewResourcePagePath,
+            ])) {
             return static::INVALID;
         }
 
@@ -232,6 +232,9 @@ class MakeResourceCommand extends Command
             $clusterImport = "use {$potentialCluster};" . PHP_EOL;
         }
 
+        $translatableImport = $this->option('translatable') ? 'use Filament\Resources\Concerns\Translatable;' : '';
+        $translatable = $this->option('translatable') ? 'use Translatable;' : '';
+
         $this->copyStubToApp('Resource', $resourcePath, [
             'clusterAssignment' => $clusterAssignment,
             'clusterImport' => $clusterImport,
@@ -255,46 +258,99 @@ class MakeResourceCommand extends Command
                 $this->option('soft-deletes') ? 'Tables\Filters\TrashedFilter::make(),' : '//',
                 4,
             ),
+            'translatableImport' => $translatableImport,
+            'translatable' => $translatable,
         ]);
 
+
+
+
         if ($this->option('simple')) {
+            $translatableManagePage  = $this->option('translatable') ? 'use ManageRecords\Concerns\Translatable;' : '';
+
+            $managePageActions = [];
+
+            if ($this->option('translatable')) {
+                $managePageActions[] = 'Actions\LocaleSwitcher::make(),';
+            }
+
+            $managePageActions = implode(PHP_EOL, $managePageActions);
+
             $this->copyStubToApp('ResourceManagePage', $manageResourcePagePath, [
                 'baseResourcePage' => 'Filament\\Resources\\Pages\\ManageRecords' . ($needsAlias ? ' as BaseManageRecords' : ''),
                 'baseResourcePageClass' => $needsAlias ? 'BaseManageRecords' : 'ManageRecords',
+                'actions' => $this->indentString($managePageActions, 3),
                 'namespace' => "{$namespace}\\{$resourceClass}\\Pages",
                 'resource' => "{$namespace}\\{$resourceClass}",
                 'resourceClass' => $resourceClass,
                 'resourcePageClass' => $manageResourcePageClass,
+                'translatableManagePage' => $translatableManagePage,
             ]);
         } else {
+            $translatableListPage = $this->option('translatable') ? 'use ListRecords\Concerns\Translatable;' : '';
+
+            $listPageActions = [];
+
+            if ($this->option('translatable')) {
+                $listPageActions[] = 'Actions\LocaleSwitcher::make(),';
+            }
+
+            $listPageActions = implode(PHP_EOL, $listPageActions);
+
             $this->copyStubToApp('ResourceListPage', $listResourcePagePath, [
                 'baseResourcePage' => 'Filament\\Resources\\Pages\\ListRecords' . ($needsAlias ? ' as BaseListRecords' : ''),
                 'baseResourcePageClass' => $needsAlias ? 'BaseListRecords' : 'ListRecords',
+                'actions' => $this->indentString($listPageActions, 3),
                 'namespace' => "{$namespace}\\{$resourceClass}\\Pages",
                 'resource' => "{$namespace}\\{$resourceClass}",
                 'resourceClass' => $resourceClass,
                 'resourcePageClass' => $listResourcePageClass,
+                'translatableListPage' => $translatableListPage,
             ]);
+
+            $translatableCreatePage = $this->option('translatable') ? 'use CreateRecord\Concerns\Translatable;' : '';
+
+            $resourcePageActions = [];
+
+            if ($this->option('translatable')) {
+                $resourcePageActions[] = 'Actions\LocaleSwitcher::make(),';
+            }
+
+            $resourcePageActions = implode(PHP_EOL, $resourcePageActions);
 
             $this->copyStubToApp('ResourcePage', $createResourcePagePath, [
                 'baseResourcePage' => 'Filament\\Resources\\Pages\\CreateRecord' . ($needsAlias ? ' as BaseCreateRecord' : ''),
                 'baseResourcePageClass' => $needsAlias ? 'BaseCreateRecord' : 'CreateRecord',
+                'actions' => $this->indentString($resourcePageActions, 3),
                 'namespace' => "{$namespace}\\{$resourceClass}\\Pages",
                 'resource' => "{$namespace}\\{$resourceClass}",
                 'resourceClass' => $resourceClass,
                 'resourcePageClass' => $createResourcePageClass,
+                'translatableResourcePage' => $translatableCreatePage,
             ]);
 
             $editPageActions = [];
 
             if ($this->option('view')) {
+                $translatableViewPage = $this->option('translatable') ? 'use ViewRecord\Concerns\Translatable;' : '';
+
+                $viewPageActions = [];
+
+                if ($this->option('translatable')) {
+                    $viewPageActions[] = 'Actions\LocaleSwitcher::make(),';
+                }
+
+                $viewPageActions = implode(PHP_EOL, $viewPageActions);
+
                 $this->copyStubToApp('ResourceViewPage', $viewResourcePagePath, [
                     'baseResourcePage' => 'Filament\\Resources\\Pages\\ViewRecord' . ($needsAlias ? ' as BaseViewRecord' : ''),
                     'baseResourcePageClass' => $needsAlias ? 'BaseViewRecord' : 'ViewRecord',
+                    'actions' => $this->indentString($viewPageActions, 3),
                     'namespace' => "{$namespace}\\{$resourceClass}\\Pages",
                     'resource' => "{$namespace}\\{$resourceClass}",
                     'resourceClass' => $resourceClass,
                     'resourcePageClass' => $viewResourcePageClass,
+                    'translatableViewPage' => $translatableViewPage,
                 ]);
 
                 $editPageActions[] = 'Actions\ViewAction::make(),';
@@ -307,7 +363,13 @@ class MakeResourceCommand extends Command
                 $editPageActions[] = 'Actions\RestoreAction::make(),';
             }
 
+            if ($this->option('translatable')) {
+                $editPageActions[] = 'Actions\LocaleSwitcher::make(),';
+            }
+
             $editPageActions = implode(PHP_EOL, $editPageActions);
+
+            $translatableEditPage = $this->option('translatable') ? 'use EditRecord\Concerns\Translatable;' : '';
 
             $this->copyStubToApp('ResourceEditPage', $editResourcePagePath, [
                 'baseResourcePage' => 'Filament\\Resources\\Pages\\EditRecord' . ($needsAlias ? ' as BaseEditRecord' : ''),
@@ -317,10 +379,17 @@ class MakeResourceCommand extends Command
                 'resource' => "{$namespace}\\{$resourceClass}",
                 'resourceClass' => $resourceClass,
                 'resourcePageClass' => $editResourcePageClass,
+                'translatableEditPage' => $translatableEditPage,
             ]);
         }
 
         $this->components->info("Filament resource [{$resourcePath}] created successfully.");
+
+        if ($this->option('translatable')) {
+            if (! class_exists('Filament\SpatieLaravelTranslatablePlugin')) {
+                $this->components->info('"Filament\SpatieLaravelTranslatablePlugin" package is required. you can install it by visiting https://filamentphp.com/plugins/filament-spatie-translatable.');
+            }
+        }
 
         return static::SUCCESS;
     }

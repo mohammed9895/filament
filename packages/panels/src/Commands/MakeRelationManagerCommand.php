@@ -21,16 +21,16 @@ class MakeRelationManagerCommand extends Command
 
     protected $description = 'Create a new Filament relation manager class for a resource';
 
-    protected $signature = 'make:filament-relation-manager {resource?} {relationship?} {recordTitleAttribute?} {--attach} {--associate} {--soft-deletes} {--view} {--panel=} {--F|force}';
+    protected $signature = 'make:filament-relation-manager {resource?} {relationship?} {recordTitleAttribute?} {--attach} {--associate} {--soft-deletes} {--view} {--panel=} {--F|force} {--t|translatable}';
 
     public function handle(): int
     {
         $resource = (string) str(
             $this->argument('resource') ?? text(
-                label: 'What is the resource you would like to create this in?',
-                placeholder: 'DepartmentResource',
-                required: true,
-            ),
+            label: 'What is the resource you would like to create this in?',
+            placeholder: 'DepartmentResource',
+            required: true,
+        ),
         )
             ->studly()
             ->trim('/')
@@ -105,10 +105,12 @@ class MakeRelationManagerCommand extends Command
             ->append('.php');
 
         if (! $this->option('force') && $this->checkForCollision([
-            $path,
-        ])) {
+                $path,
+            ])) {
             return static::INVALID;
         }
+
+        $translatable = $this->option('translatable') ? 'use Translatable;' : '';
 
         $tableHeaderActions = [];
 
@@ -121,6 +123,10 @@ class MakeRelationManagerCommand extends Command
         if ($this->option('attach')) {
             $tableHeaderActions[] = 'Tables\Actions\AttachAction::make(),';
         }
+        if ($this->option('translatable')) {
+            $tableHeaderActions[] = 'Tables\Actions\LocaleSwitcher::make(),';
+        }
+
 
         $tableHeaderActions = implode(PHP_EOL, $tableHeaderActions);
 
@@ -147,6 +153,8 @@ class MakeRelationManagerCommand extends Command
             $tableActions[] = 'Tables\Actions\RestoreAction::make(),';
         }
 
+
+
         $tableActions = implode(PHP_EOL, $tableActions);
 
         $tableBulkActions = [];
@@ -172,6 +180,7 @@ class MakeRelationManagerCommand extends Command
             $tableBulkActions[] = 'Tables\Actions\RestoreBulkAction::make(),';
         }
 
+
         $tableBulkActions = implode(PHP_EOL, $tableBulkActions);
 
         $this->copyStubToApp('RelationManager', $path, [
@@ -187,11 +196,18 @@ class MakeRelationManagerCommand extends Command
                 4,
             ),
             'tableHeaderActions' => $this->indentString($tableHeaderActions, 4),
+            'translatable' => $translatable,
         ]);
 
         $this->components->info("Filament relation manager [{$path}] created successfully.");
 
         $this->components->info("Make sure to register the relation in `{$resource}::getRelations()`.");
+
+        if ($this->option('translatable')) {
+            if (! class_exists('Filament\SpatieLaravelTranslatablePlugin')) {
+                $this->components->info('"Filament\SpatieLaravelTranslatablePlugin" package is required. you can install it by visiting https://filamentphp.com/plugins/filament-spatie-translatable.');
+            }
+        }
 
         return static::SUCCESS;
     }

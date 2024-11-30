@@ -8,11 +8,14 @@ use {{ baseResourcePage }};
 
 class {{ resourcePageClass }} extends {{ baseResourcePageClass }}
 {
+    {{ translatableManagePage }}
+
     protected static string $resource = {{ resourceClass }}::class;
 
     protected function getHeaderActions(): array
     {
         return [
+{{ actions }}
             Actions\CreateAction::make(),
         ];
     }

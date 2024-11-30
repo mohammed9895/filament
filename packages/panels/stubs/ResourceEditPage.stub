@@ -8,6 +8,8 @@ use {{ baseResourcePage }};
 
 class {{ resourcePageClass }} extends {{ baseResourcePageClass }}
 {
+    {{ translatableEditPage }}
+
     protected static string $resource = {{ resourceClass }}::class;
 
     protected function getHeaderActions(): array
