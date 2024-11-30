@@ -98,6 +98,15 @@ If you'd like to save time when scaffolding your resources, Filament can also ge
 php artisan make:filament-resource Customer --model --migration --factory
 ```
 
+### Generating Resource with [Spatie Translatable Plugin](https://filamentphp.com/plugins/filament-spatie-translatable) Support
+
+If you are using [Spatie Translatable Plugin](https://filamentphp.com/plugins/filament-spatie-translatable), Filament can also generate resources with plugin requirements,only by passing `-t` or `--translatable`:
+
+```bash
+php artisan make:filament-resource Customer -t
+```
+
+
 ## Record titles
 
 A `$recordTitleAttribute` may be set for your resource, which is the name of the column on your model that can be used to identify it from others.
