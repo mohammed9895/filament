@@ -27,10 +27,10 @@ class MakeRelationManagerCommand extends Command
     {
         $resource = (string) str(
             $this->argument('resource') ?? text(
-            label: 'What is the resource you would like to create this in?',
-            placeholder: 'DepartmentResource',
-            required: true,
-        ),
+                label: 'What is the resource you would like to create this in?',
+                placeholder: 'DepartmentResource',
+                required: true,
+            ),
         )
             ->studly()
             ->trim('/')
@@ -105,8 +105,8 @@ class MakeRelationManagerCommand extends Command
             ->append('.php');
 
         if (! $this->option('force') && $this->checkForCollision([
-                $path,
-            ])) {
+            $path,
+        ])) {
             return static::INVALID;
         }
 
@@ -126,7 +126,6 @@ class MakeRelationManagerCommand extends Command
         if ($this->option('translatable')) {
             $tableHeaderActions[] = 'Tables\Actions\LocaleSwitcher::make(),';
         }
-
 
         $tableHeaderActions = implode(PHP_EOL, $tableHeaderActions);
 
@@ -153,8 +152,6 @@ class MakeRelationManagerCommand extends Command
             $tableActions[] = 'Tables\Actions\RestoreAction::make(),';
         }
 
-
-
         $tableActions = implode(PHP_EOL, $tableActions);
 
         $tableBulkActions = [];
@@ -179,7 +176,6 @@ class MakeRelationManagerCommand extends Command
             $tableBulkActions[] = 'Tables\Actions\ForceDeleteBulkAction::make(),';
             $tableBulkActions[] = 'Tables\Actions\RestoreBulkAction::make(),';
         }
-
 
         $tableBulkActions = implode(PHP_EOL, $tableBulkActions);
 

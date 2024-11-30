@@ -148,13 +148,13 @@ class MakeResourceCommand extends Command
         $viewResourcePagePath = "{$resourcePagesDirectory}/{$viewResourcePageClass}.php";
 
         if (! $this->option('force') && $this->checkForCollision([
-                $resourcePath,
-                $listResourcePagePath,
-                $manageResourcePagePath,
-                $createResourcePagePath,
-                $editResourcePagePath,
-                $viewResourcePagePath,
-            ])) {
+            $resourcePath,
+            $listResourcePagePath,
+            $manageResourcePagePath,
+            $createResourcePagePath,
+            $editResourcePagePath,
+            $viewResourcePagePath,
+        ])) {
             return static::INVALID;
         }
 
@@ -262,11 +262,8 @@ class MakeResourceCommand extends Command
             'translatable' => $translatable,
         ]);
 
-
-
-
         if ($this->option('simple')) {
-            $translatableManagePage  = $this->option('translatable') ? 'use ManageRecords\Concerns\Translatable;' : '';
+            $translatableManagePage = $this->option('translatable') ? 'use ManageRecords\Concerns\Translatable;' : '';
 
             $managePageActions = [];
 
